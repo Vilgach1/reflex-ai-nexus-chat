@@ -12,7 +12,7 @@ const Welcome: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [animationComplete, setAnimationComplete] = useState(false);
   const [telegramAuth, setTelegramAuth] = useState(false);
-  const defaultApiKey = "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";
+  const defaultApiKey = "YOUR_API_KEY"; // API key redacted
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -131,13 +131,20 @@ const Welcome: React.FC = () => {
           </div>
 
           <div className="mt-8 text-center text-xs text-muted-foreground animate-fade-in" style={{ animationDelay: "800ms" }}>
-            <p>Powered by OpenRouter AI - Images and text are processed via their API</p>
-            <p className="mt-1">Default API key already configured for you</p>
+            <div className="space-y-2">
+              <p>Powered by OpenRouter AI - Images and text are processed via their API</p>
+              <p>Default API key already configured for you</p>
+              <p className="mt-4 p-2 border border-border/30 rounded-lg bg-background/50">
+                <strong>How to use Telegram Authorization:</strong><br/>
+                1. Click the "Continue with Telegram" button<br/>
+                2. You will be redirected to Telegram's auth page<br/>
+                3. Login with your Telegram account<br/>
+                4. Grant the necessary permissions<br/>
+                5. You'll be automatically returned to the chat
+              </p>
+            </div>
           </div>
         </div>
       )}
     </div>
   );
-};
-
-export default Welcome;

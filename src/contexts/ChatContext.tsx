@@ -1,7 +1,7 @@
 
 import React, { createContext, useContext, useReducer, useEffect } from "react";
 import { v4 as uuidv4 } from "uuid";
-import { ChatState, Message, MessageContent, AIModelResponse } from "../types/chat";
+import { ChatState, Message, MessageContent, AIModelResponse, Role } from "../types/chat";
 
 // Actions
 type Action =
@@ -57,7 +57,7 @@ interface ChatContextType extends ChatState {
   clearMessages: () => void;
   setApiKey: (key: string) => void;
   toggleDualVerification: () => void;
-  addStaticMessage: (message: { role: string; content: MessageContent[] }) => void;
+  addStaticMessage: (message: { role: Role; content: MessageContent[] }) => void;
 }
 
 const ChatContext = createContext<ChatContextType | undefined>(undefined);
@@ -89,7 +89,7 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   // Add a static message (no API call)
-  const addStaticMessage = (message: { role: string; content: MessageContent[] }) => {
+  const addStaticMessage = (message: { role: Role; content: MessageContent[] }) => {
     const newMessage: Message = {
       id: uuidv4(),
       role: message.role,
