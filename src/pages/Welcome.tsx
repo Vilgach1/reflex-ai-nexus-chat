@@ -1,18 +1,35 @@
 
 import React, { useState, useEffect } from "react";
-import { ApiKeyInput } from "../components/ApiKeyInput";
 import { useChat } from "../contexts/ChatContext";
 import { Navigate } from "react-router-dom";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Button } from "@/components/ui/button";
-import BrandTelegram from "../components/icons/BrandTelegram";
+import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
 
 const Welcome: React.FC = () => {
   const { apiKey, setApiKey } = useChat();
   const [loading, setLoading] = useState(true);
   const [animationComplete, setAnimationComplete] = useState(false);
-  const [telegramAuth, setTelegramAuth] = useState(false);
+  const [accessCode, setAccessCode] = useState("");
+  const [cookiesAccepted, setCookiesAccepted] = useState(false);
+  const [tosAccepted, setTosAccepted] = useState(false);
+  const [error, setError] = useState("");
   const defaultApiKey = "YOUR_API_KEY"; // API key redacted
+
+  // Valid access codes (16 characters each)
+  const validAccessCodes = [
+    "a1b2c3d4e5f6g7h8",
+    "i9j0k1l2m3n4o5p6",
+    "q7r8s9t0u1v2w3x4",
+    "y5z6a7b8c9d0e1f2",
+    "g3h4i5j6k7l8m9n0",
+    "o1p2q3r4s5t6u7v8",
+    "w9x0y1z2a3b4c5d6",
+    "e7f8g9h0i1j2k3l4",
+    "m5n6o7p8q9r0s1t2",
+    "u3v4w5x6y7z8a9b0"
+  ];
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -32,14 +49,20 @@ const Welcome: React.FC = () => {
     }
   }, [loading]);
 
-  // Only redirect to chat if both API key is set and telegram authorization is done
-  if (apiKey && telegramAuth && animationComplete) {
+  // Only redirect to chat if access code is valid and terms are accepted
+  if (apiKey && animationComplete && validAccessCodes.includes(accessCode) && cookiesAccepted && tosAccepted) {
     return <Navigate to="/chat" />;
   }
 
-  const handleTelegramAuth = () => {
-    setApiKey(defaultApiKey);
-    setTelegramAuth(true);
+  const handleAccessSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (validAccessCodes.includes(accessCode)) {
+      setApiKey(defaultApiKey);
+      setError("");
+    } else {
+      setError("Invalid access code. Please try again.");
+    }
   };
 
   return (
@@ -106,42 +129,58 @@ const Welcome: React.FC = () => {
             <div className="w-full max-w-md mx-auto p-6 glass-panel rounded-xl animate-fade-in">
               <h2 className="text-xl font-semibold mb-4 text-primary">Enter REFLEX AI</h2>
               
-              <div className="space-y-4">
-                <Button 
-                  onClick={handleTelegramAuth}
-                  className={`w-full py-6 ${telegramAuth ? 'bg-green-600 hover:bg-green-700' : 'bg-[#0088cc] hover:bg-[#0088cc]/90'} transition-all duration-300 rounded-lg floating-button flex items-center justify-center gap-2`}
-                >
-                  <BrandTelegram className="h-5 w-5" />
-                  <span>{telegramAuth ? 'Authorized with Telegram' : 'Continue with Telegram'}</span>
-                </Button>
+              <form onSubmit={handleAccessSubmit} className="space-y-4">
+                <div>
+                  <Input
+                    type="text"
+                    placeholder="Enter access code (16 characters)"
+                    value={accessCode}
+                    onChange={(e) => setAccessCode(e.target.value)}
+                    className="w-full py-6 floating-input"
+                    maxLength={16}
+                  />
+                  {error && <p className="text-destructive text-sm mt-1">{error}</p>}
+                </div>
                 
-                {!telegramAuth && (
-                  <>
-                    <div className="relative flex items-center justify-center">
-                      <div className="border-t border-border flex-grow"></div>
-                      <span className="px-4 text-xs text-muted-foreground">or use an API key</span>
-                      <div className="border-t border-border flex-grow"></div>
-                    </div>
-                    
-                    <ApiKeyInput />
-                  </>
-                )}
-              </div>
+                <div className="space-y-2">
+                  <div className="flex items-center space-x-2">
+                    <Checkbox 
+                      id="cookies" 
+                      checked={cookiesAccepted} 
+                      onCheckedChange={(checked) => setCookiesAccepted(checked as boolean)} 
+                    />
+                    <label htmlFor="cookies" className="text-sm text-muted-foreground cursor-pointer">
+                      I accept cookies and data collection for service improvement
+                    </label>
+                  </div>
+                  
+                  <div className="flex items-center space-x-2">
+                    <Checkbox 
+                      id="tos" 
+                      checked={tosAccepted} 
+                      onCheckedChange={(checked) => setTosAccepted(checked as boolean)} 
+                    />
+                    <label htmlFor="tos" className="text-sm text-muted-foreground cursor-pointer">
+                      I agree to the Terms of Service and Privacy Policy
+                    </label>
+                  </div>
+                </div>
+                
+                <Button 
+                  type="submit"
+                  className="w-full py-6 bg-primary/90 hover:bg-primary transition-all duration-300 rounded-lg floating-button"
+                  disabled={!accessCode || !cookiesAccepted || !tosAccepted}
+                >
+                  Access Chat
+                </Button>
+              </form>
             </div>
           </div>
 
           <div className="mt-8 text-center text-xs text-muted-foreground animate-fade-in" style={{ animationDelay: "800ms" }}>
             <div className="space-y-2">
               <p>Powered by OpenRouter AI - Images and text are processed via their API</p>
-              <p>Default API key already configured for you</p>
-              <p className="mt-4 p-2 border border-border/30 rounded-lg bg-background/50">
-                <strong>How to use Telegram Authorization:</strong><br/>
-                1. Click the "Continue with Telegram" button<br/>
-                2. You will be redirected to Telegram's auth page<br/>
-                3. Login with your Telegram account<br/>
-                4. Grant the necessary permissions<br/>
-                5. You'll be automatically returned to the chat
-              </p>
+              <p>Your data is collected and processed according to our Privacy Policy</p>
             </div>
           </div>
         </div>

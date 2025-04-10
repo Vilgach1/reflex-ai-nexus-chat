@@ -3,7 +3,6 @@ import React, { useEffect } from "react";
 import { ChatInterface } from "../components/ChatInterface";
 import { useChat } from "../contexts/ChatContext";
 import { Navigate } from "react-router-dom";
-import { MessageContent } from "@/types/chat";
 
 const Chat: React.FC = () => {
   const { apiKey, messages, addStaticMessage } = useChat();
