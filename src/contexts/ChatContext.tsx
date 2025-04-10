@@ -57,6 +57,7 @@ interface ChatContextType extends ChatState {
   clearMessages: () => void;
   setApiKey: (key: string) => void;
   toggleDualVerification: () => void;
+  addStaticMessage: (message: { role: string; content: MessageContent[] }) => void;
 }
 
 const ChatContext = createContext<ChatContextType | undefined>(undefined);
@@ -85,6 +86,18 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Toggle dual verification
   const toggleDualVerification = () => {
     dispatch({ type: "TOGGLE_DUAL_VERIFICATION" });
+  };
+
+  // Add a static message (no API call)
+  const addStaticMessage = (message: { role: string; content: MessageContent[] }) => {
+    const newMessage: Message = {
+      id: uuidv4(),
+      role: message.role,
+      content: message.content,
+      createdAt: new Date(),
+    };
+    
+    dispatch({ type: "ADD_MESSAGE", payload: newMessage });
   };
 
   // Send message to API
@@ -249,6 +262,7 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
         clearMessages,
         setApiKey,
         toggleDualVerification,
+        addStaticMessage,
       }}
     >
       {children}

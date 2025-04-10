@@ -6,7 +6,7 @@ import { Navigate } from "react-router-dom";
 import { MessageContent } from "@/types/chat";
 
 const Chat: React.FC = () => {
-  const { apiKey, messages, sendMessage } = useChat();
+  const { apiKey, messages, addStaticMessage } = useChat();
 
   // Redirect to welcome if API key is not set
   if (!apiKey) {
@@ -16,22 +16,18 @@ const Chat: React.FC = () => {
   // Send welcome message if this is a fresh chat
   useEffect(() => {
     if (messages.length === 0) {
-      const welcomeMessage: MessageContent[] = [
-        {
-          type: "text",
-          text: "Hello! I'm REFLEX AI, your advanced AI assistant. How can I help you today?",
-        },
-      ];
-      
-      // Add welcome message
-      sendMessage([
-        {
-          type: "text",
-          text: "Introduce yourself as REFLEX AI and welcome the user.",
-        },
-      ]);
+      // Add a static welcome message instead of requesting from the neural network
+      addStaticMessage({
+        role: "assistant",
+        content: [
+          {
+            type: "text",
+            text: "Hello! I'm REFLEX AI, your advanced AI assistant. How can I help you today?",
+          },
+        ],
+      });
     }
-  }, [messages.length, sendMessage]);
+  }, [messages.length, addStaticMessage]);
 
   return (
     <div className="h-screen overflow-hidden bg-background">

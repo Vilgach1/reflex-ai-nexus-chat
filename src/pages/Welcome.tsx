@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { ApiKeyInput } from "../components/ApiKeyInput";
 import { useChat } from "../contexts/ChatContext";
@@ -10,6 +11,7 @@ const Welcome: React.FC = () => {
   const { apiKey, setApiKey } = useChat();
   const [loading, setLoading] = useState(true);
   const [animationComplete, setAnimationComplete] = useState(false);
+  const [telegramAuth, setTelegramAuth] = useState(false);
   const defaultApiKey = "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";
 
   useEffect(() => {
@@ -30,18 +32,14 @@ const Welcome: React.FC = () => {
     }
   }, [loading]);
 
-  useEffect(() => {
-    if (!apiKey && !loading) {
-      setApiKey(defaultApiKey);
-    }
-  }, [apiKey, loading, setApiKey, defaultApiKey]);
-
-  if (apiKey && animationComplete) {
+  // Only redirect to chat if both API key is set and telegram authorization is done
+  if (apiKey && telegramAuth && animationComplete) {
     return <Navigate to="/chat" />;
   }
 
   const handleTelegramAuth = () => {
     setApiKey(defaultApiKey);
+    setTelegramAuth(true);
   };
 
   return (
@@ -55,17 +53,19 @@ const Welcome: React.FC = () => {
           <img 
             src="/lovable-uploads/6c6c0bb8-75ce-4564-b83c-9893d315e7a6.png" 
             alt="REFLEX AI" 
-            className="w-24 h-24 mb-4"
+            className="w-24 h-24 mb-4 object-contain"
           />
         </div>
       ) : (
         <div className="max-w-2xl w-full mx-auto">
           <div className="text-center mb-8 animate-fade-in">
-            <img 
-              src="/lovable-uploads/6c6c0bb8-75ce-4564-b83c-9893d315e7a6.png" 
-              alt="REFLEX AI" 
-              className="w-24 h-24 mx-auto mb-6 animate-float"
-            />
+            <div className="w-24 h-24 mx-auto mb-6 animate-float flex items-center justify-center">
+              <img 
+                src="/lovable-uploads/6c6c0bb8-75ce-4564-b83c-9893d315e7a6.png" 
+                alt="REFLEX AI" 
+                className="w-full h-full object-contain"
+              />
+            </div>
             <h1 className="text-4xl font-bold text-gradient mb-2">REFLEX AI Nexus</h1>
             <p className="text-muted-foreground">Your advanced AI chat assistant</p>
           </div>
@@ -109,19 +109,23 @@ const Welcome: React.FC = () => {
               <div className="space-y-4">
                 <Button 
                   onClick={handleTelegramAuth}
-                  className="w-full py-6 bg-[#0088cc] hover:bg-[#0088cc]/90 transition-all duration-300 rounded-lg floating-button flex items-center justify-center gap-2"
+                  className={`w-full py-6 ${telegramAuth ? 'bg-green-600 hover:bg-green-700' : 'bg-[#0088cc] hover:bg-[#0088cc]/90'} transition-all duration-300 rounded-lg floating-button flex items-center justify-center gap-2`}
                 >
                   <BrandTelegram className="h-5 w-5" />
-                  <span>Continue with Telegram</span>
+                  <span>{telegramAuth ? 'Authorized with Telegram' : 'Continue with Telegram'}</span>
                 </Button>
                 
-                <div className="relative flex items-center justify-center">
-                  <div className="border-t border-border flex-grow"></div>
-                  <span className="px-4 text-xs text-muted-foreground">or use an API key</span>
-                  <div className="border-t border-border flex-grow"></div>
-                </div>
-                
-                <ApiKeyInput />
+                {!telegramAuth && (
+                  <>
+                    <div className="relative flex items-center justify-center">
+                      <div className="border-t border-border flex-grow"></div>
+                      <span className="px-4 text-xs text-muted-foreground">or use an API key</span>
+                      <div className="border-t border-border flex-grow"></div>
+                    </div>
+                    
+                    <ApiKeyInput />
+                  </>
+                )}
               </div>
             </div>
           </div>
