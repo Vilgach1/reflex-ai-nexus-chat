@@ -82,11 +82,11 @@ export const ChatInterface: React.FC = () => {
         {messages.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-center p-6">
             <div className="w-16 h-16 mb-4 rounded-full bg-primary/5 flex items-center justify-center animate-float">
-              <img src="/lovable-uploads/a2940193-64b8-463b-8771-5bccc5f77c25.png" alt="REFLEX AI" className="w-10 h-10" />
+              <img src="/lovable-uploads/6c6c0bb8-75ce-4564-b83c-9893d315e7a6.png" alt="REFLEX AI" className="w-10 h-10" />
             </div>
             <h2 className="text-xl font-bold mb-2 text-gradient">Welcome to REFLEX AI Nexus</h2>
             <p className="text-muted-foreground max-w-md">
-              Start a conversation with the AI. You can upload images, format text with **bold** and > quotes, and more.
+              Start a conversation with the AI. You can upload images, format text with **bold** and {">"} quotes, and more.
             </p>
             {dualVerification && (
               <div className="flex items-center gap-2 mt-4 p-2 rounded-lg bg-primary/5">

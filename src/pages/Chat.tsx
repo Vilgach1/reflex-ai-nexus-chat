@@ -23,13 +23,6 @@ const Chat: React.FC = () => {
         },
       ];
       
-      const systemMessage = {
-        id: "welcome",
-        role: "assistant" as const,
-        content: welcomeMessage,
-        createdAt: new Date(),
-      };
-      
       // Add welcome message
       sendMessage([
         {
