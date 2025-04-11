@@ -2,15 +2,15 @@
 import React, { useEffect } from "react";
 import { ChatInterface } from "../components/ChatInterface";
 import { useChat } from "../contexts/ChatContext";
-import { Navigate } from "react-router-dom";
 
 const Chat: React.FC = () => {
-  const { apiKey, messages, addStaticMessage } = useChat();
-
-  // Redirect to welcome if API key is not set
-  if (!apiKey) {
-    return <Navigate to="/" />;
-  }
+  const { messages, addStaticMessage, setApiKey } = useChat();
+  
+  // Set default API key on component mount
+  useEffect(() => {
+    // Set a default API key
+    setApiKey("YOUR_API_KEY"); // Replace with your actual API key
+  }, [setApiKey]);
 
   // Send welcome message if this is a fresh chat
   useEffect(() => {
