@@ -6,11 +6,11 @@ import { useChat } from "../contexts/ChatContext";
 import { MessageContent } from "../types/chat";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "./ThemeToggle";
-import { Shield, Trash2, VerifiedIcon } from "lucide-react";
+import { Shield, Trash2, VerifiedIcon, AlertTriangle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 export const ChatInterface: React.FC = () => {
-  const { messages, sendMessage, isLoading, clearMessages, dualVerification, toggleDualVerification } = useChat();
+  const { messages, sendMessage, isLoading, clearMessages, dualVerification, toggleDualVerification, error } = useChat();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
@@ -21,6 +21,17 @@ export const ChatInterface: React.FC = () => {
     }
   }, [messages]);
 
+  useEffect(() => {
+    if (error) {
+      toast({
+        title: "Ошибка",
+        description: error,
+        variant: "destructive",
+        duration: 5000,
+      });
+    }
+  }, [error, toast]);
+
   const handleSendMessage = async (content: MessageContent[]) => {
     await sendMessage(content);
   };
@@ -28,8 +39,8 @@ export const ChatInterface: React.FC = () => {
   const handleClearChat = () => {
     clearMessages();
     toast({
-      title: "Chat cleared",
-      description: "All messages have been removed.",
+      title: "Чат очищен",
+      description: "Все сообщения были удалены.",
       duration: 3000,
     });
   };
@@ -37,10 +48,10 @@ export const ChatInterface: React.FC = () => {
   const handleToggleVerification = () => {
     toggleDualVerification();
     toast({
-      title: dualVerification ? "Verification mode disabled" : "Verification mode enabled",
+      title: dualVerification ? "Режим верификации выключен" : "Режим верификации включен",
       description: dualVerification 
-        ? "Responses will no longer be verified by a second AI." 
-        : "Responses will now be verified by a second AI for accuracy.",
+        ? "Ответы больше не будут проверяться вторым ИИ." 
+        : "Ответы теперь будут проверяться вторым ИИ для повышения точности.",
       duration: 3000,
     });
   };
@@ -55,7 +66,7 @@ export const ChatInterface: React.FC = () => {
             size="icon"
             onClick={handleToggleVerification}
             className={`w-9 h-9 rounded-full ${dualVerification ? 'bg-primary/20' : 'bg-primary/5'} hover:bg-primary/10`}
-            title={dualVerification ? "Disable verification mode" : "Enable verification mode"}
+            title={dualVerification ? "Отключить режим верификации" : "Включить режим верификации"}
           >
             <Shield className={`h-4 w-4 ${dualVerification ? 'text-primary' : 'text-muted-foreground'}`} />
           </Button>
@@ -65,7 +76,7 @@ export const ChatInterface: React.FC = () => {
             size="icon"
             onClick={handleClearChat}
             className="w-9 h-9 rounded-full bg-primary/5 hover:bg-primary/10"
-            title="Clear chat"
+            title="Очистить чат"
           >
             <Trash2 className="h-4 w-4 text-muted-foreground" />
           </Button>
@@ -84,14 +95,14 @@ export const ChatInterface: React.FC = () => {
             <div className="w-16 h-16 mb-4 rounded-full bg-primary/5 flex items-center justify-center animate-float">
               <img src="/lovable-uploads/6c6c0bb8-75ce-4564-b83c-9893d315e7a6.png" alt="REFLEX AI" className="w-10 h-10" />
             </div>
-            <h2 className="text-xl font-bold mb-2 text-gradient">Welcome to REFLEX AI Nexus</h2>
+            <h2 className="text-xl font-bold mb-2 text-gradient">Добро пожаловать в REFLEX AI Nexus</h2>
             <p className="text-muted-foreground max-w-md">
-              Start a conversation with the AI. You can upload images, format text with **bold** and {">"} quotes, and more.
+              Начните разговор с ИИ. Вы можете загружать изображения, форматировать текст с помощью **жирного** и {">"} цитат, и многое другое.
             </p>
             {dualVerification && (
               <div className="flex items-center gap-2 mt-4 p-2 rounded-lg bg-primary/5">
                 <VerifiedIcon className="h-4 w-4 text-primary" />
-                <span className="text-sm">Verification mode is enabled</span>
+                <span className="text-sm">Режим верификации включен</span>
               </div>
             )}
           </div>
@@ -106,6 +117,11 @@ export const ChatInterface: React.FC = () => {
       </div>
       
       <ChatInput onSendMessage={handleSendMessage} disabled={isLoading} />
+      
+      <div className="p-2 text-xs text-center text-muted-foreground border-t border-border/40 bg-background/80 backdrop-blur-sm flex items-center justify-center">
+        <AlertTriangle className="h-3 w-3 mr-1 text-yellow-500" />
+        ИИ может ошибаться. Пожалуйста, проверяйте важную информацию.
+      </div>
     </div>
   );
 };
