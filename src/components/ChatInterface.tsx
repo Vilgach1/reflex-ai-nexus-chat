@@ -3,14 +3,16 @@ import React, { useRef, useEffect } from "react";
 import { ChatMessage } from "./ChatMessage";
 import { ChatInput } from "./ChatInput";
 import { useChat } from "../contexts/ChatContext";
+import { useAuth } from "../contexts/AuthContext";
 import { MessageContent } from "../types/chat";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "./ThemeToggle";
-import { Shield, Trash2, VerifiedIcon, AlertTriangle } from "lucide-react";
+import { Shield, Trash2, VerifiedIcon, AlertTriangle, LogOut } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 export const ChatInterface: React.FC = () => {
   const { messages, sendMessage, isLoading, clearMessages, dualVerification, toggleDualVerification, error } = useChat();
+  const { signOut } = useAuth();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
@@ -56,6 +58,10 @@ export const ChatInterface: React.FC = () => {
     });
   };
 
+  const handleSignOut = async () => {
+    await signOut();
+  };
+
   return (
     <div className="flex flex-col h-full max-h-screen">
       <div className="flex items-center justify-between p-4 border-b border-border/50">
@@ -79,6 +85,16 @@ export const ChatInterface: React.FC = () => {
             title="Очистить чат"
           >
             <Trash2 className="h-4 w-4 text-muted-foreground" />
+          </Button>
+          
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={handleSignOut}
+            className="w-9 h-9 rounded-full bg-primary/5 hover:bg-primary/10"
+            title="Выйти из аккаунта"
+          >
+            <LogOut className="h-4 w-4 text-muted-foreground" />
           </Button>
           
           <ThemeToggle />

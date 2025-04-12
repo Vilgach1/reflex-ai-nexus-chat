@@ -1,14 +1,20 @@
 
 import React, { useState, useEffect } from "react";
 import { useChat } from "../contexts/ChatContext";
+import { useAuth } from "../contexts/AuthContext";
 import { Navigate } from "react-router-dom";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Google, AlertTriangle } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 const Welcome: React.FC = () => {
   const { apiKey, setApiKey } = useChat();
+  const { user, loading: authLoading, signIn, signUp, googleSignIn } = useAuth();
+  const { toast } = useToast();
   const [loading, setLoading] = useState(true);
   const [animationComplete, setAnimationComplete] = useState(false);
   const [accessCode, setAccessCode] = useState("");
@@ -16,6 +22,12 @@ const Welcome: React.FC = () => {
   const [tosAccepted, setTosAccepted] = useState(false);
   const [error, setError] = useState("");
   const defaultApiKey = "YOUR_API_KEY"; // API key redacted
+  
+  // Auth form state
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [authError, setAuthError] = useState("");
 
   // Valid access codes (16 characters each)
   const validAccessCodes = [
@@ -49,8 +61,12 @@ const Welcome: React.FC = () => {
     }
   }, [loading]);
 
-  // Only redirect to chat if access code is valid and terms are accepted
-  if (apiKey && animationComplete && validAccessCodes.includes(accessCode) && cookiesAccepted && tosAccepted) {
+  // Only redirect to chat if user is authenticated or access code is valid and terms are accepted
+  if ((user || (apiKey && validAccessCodes.includes(accessCode))) && animationComplete && cookiesAccepted && tosAccepted) {
+    // Set API key if not already set
+    if (!apiKey && user) {
+      setApiKey(defaultApiKey);
+    }
     return <Navigate to="/chat" />;
   }
 
@@ -62,6 +78,46 @@ const Welcome: React.FC = () => {
       setError("");
     } else {
       setError("Invalid access code. Please try again.");
+    }
+  };
+
+  const handleSignIn = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setAuthError("");
+    
+    if (!email || !password) {
+      setAuthError("Пожалуйста, заполните все поля");
+      return;
+    }
+    
+    const { error } = await signIn(email, password);
+    if (error) {
+      setAuthError(error.message);
+    }
+  };
+
+  const handleSignUp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setAuthError("");
+    
+    if (!email || !password || !confirmPassword) {
+      setAuthError("Пожалуйста, заполните все поля");
+      return;
+    }
+    
+    if (password !== confirmPassword) {
+      setAuthError("Пароли не совпадают");
+      return;
+    }
+    
+    if (password.length < 6) {
+      setAuthError("Пароль должен содержать не менее 6 символов");
+      return;
+    }
+    
+    const { error } = await signUp(email, password);
+    if (error) {
+      setAuthError(error.message);
     }
   };
 
@@ -90,24 +146,24 @@ const Welcome: React.FC = () => {
               />
             </div>
             <h1 className="text-4xl font-bold text-gradient mb-2">REFLEX AI Nexus</h1>
-            <p className="text-muted-foreground">Your advanced AI chat assistant</p>
+            <p className="text-muted-foreground">Ваш продвинутый AI-ассистент для общения</p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
             {[
               {
-                title: "Advanced Chat",
-                description: "Chat with state-of-the-art AI models with text and image support",
+                title: "Продвинутый Чат",
+                description: "Общайтесь с современными AI-моделями с поддержкой текста и изображений",
                 delay: 100
               },
               {
-                title: "Verification Mode",
-                description: "Enable dual AI verification for more accurate responses",
+                title: "Режим Верификации",
+                description: "Включите двойную AI-верификацию для более точных ответов",
                 delay: 200
               },
               {
-                title: "Beautiful Interface",
-                description: "Enjoy a sleek, minimalist design with glass-morphism effects",
+                title: "Красивый Интерфейс",
+                description: "Наслаждайтесь элегантным, минималистичным дизайном с эффектами стекломорфизма",
                 delay: 300
               }
             ].map((feature, index) => (
@@ -127,60 +183,235 @@ const Welcome: React.FC = () => {
             style={{ animationDelay: "500ms" }}
           >
             <div className="w-full max-w-md mx-auto p-6 glass-panel rounded-xl animate-fade-in">
-              <h2 className="text-xl font-semibold mb-4 text-primary">Enter REFLEX AI</h2>
-              
-              <form onSubmit={handleAccessSubmit} className="space-y-4">
-                <div>
-                  <Input
-                    type="text"
-                    placeholder="Enter access code (16 characters)"
-                    value={accessCode}
-                    onChange={(e) => setAccessCode(e.target.value)}
-                    className="w-full py-6 floating-input"
-                    maxLength={16}
-                  />
-                  {error && <p className="text-destructive text-sm mt-1">{error}</p>}
-                </div>
+              <Tabs defaultValue="signin" className="w-full">
+                <TabsList className="grid w-full grid-cols-2 mb-4">
+                  <TabsTrigger value="signin">Вход</TabsTrigger>
+                  <TabsTrigger value="signup">Регистрация</TabsTrigger>
+                </TabsList>
                 
-                <div className="space-y-2">
-                  <div className="flex items-center space-x-2">
-                    <Checkbox 
-                      id="cookies" 
-                      checked={cookiesAccepted} 
-                      onCheckedChange={(checked) => setCookiesAccepted(checked as boolean)} 
-                    />
-                    <label htmlFor="cookies" className="text-sm text-muted-foreground cursor-pointer">
-                      I accept cookies and data collection for service improvement
-                    </label>
-                  </div>
-                  
-                  <div className="flex items-center space-x-2">
-                    <Checkbox 
-                      id="tos" 
-                      checked={tosAccepted} 
-                      onCheckedChange={(checked) => setTosAccepted(checked as boolean)} 
-                    />
-                    <label htmlFor="tos" className="text-sm text-muted-foreground cursor-pointer">
-                      I agree to the Terms of Service and Privacy Policy
-                    </label>
-                  </div>
-                </div>
+                <TabsContent value="signin">
+                  <form onSubmit={handleSignIn} className="space-y-4">
+                    <div>
+                      <Input
+                        type="email"
+                        placeholder="Электронная почта"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        className="w-full py-6 floating-input"
+                      />
+                    </div>
+                    
+                    <div>
+                      <Input
+                        type="password"
+                        placeholder="Пароль"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        className="w-full py-6 floating-input"
+                      />
+                    </div>
+                    
+                    {authError && (
+                      <p className="text-destructive text-sm mt-1">{authError}</p>
+                    )}
+                    
+                    <div className="space-y-2">
+                      <div className="flex items-center space-x-2">
+                        <Checkbox 
+                          id="cookies" 
+                          checked={cookiesAccepted} 
+                          onCheckedChange={(checked) => setCookiesAccepted(checked as boolean)} 
+                        />
+                        <label htmlFor="cookies" className="text-sm text-muted-foreground cursor-pointer">
+                          Я принимаю использование cookies и сбор данных для улучшения сервиса
+                        </label>
+                      </div>
+                      
+                      <div className="flex items-center space-x-2">
+                        <Checkbox 
+                          id="tos" 
+                          checked={tosAccepted} 
+                          onCheckedChange={(checked) => setTosAccepted(checked as boolean)} 
+                        />
+                        <label htmlFor="tos" className="text-sm text-muted-foreground cursor-pointer">
+                          Я согласен с Условиями использования и Политикой конфиденциальности
+                        </label>
+                      </div>
+                    </div>
+                    
+                    <Button 
+                      type="submit"
+                      className="w-full py-6 bg-primary/90 hover:bg-primary transition-all duration-300 rounded-lg floating-button"
+                      disabled={!cookiesAccepted || !tosAccepted || authLoading}
+                    >
+                      {authLoading ? "Вход..." : "Войти"}
+                    </Button>
+                    
+                    <div className="relative">
+                      <div className="absolute inset-0 flex items-center">
+                        <span className="w-full border-t" />
+                      </div>
+                      <div className="relative flex justify-center text-xs uppercase">
+                        <span className="bg-background px-2 text-muted-foreground">Или</span>
+                      </div>
+                    </div>
+                    
+                    <Button 
+                      type="button"
+                      variant="outline"
+                      onClick={googleSignIn}
+                      className="w-full py-6 transition-all duration-300 rounded-lg"
+                      disabled={!cookiesAccepted || !tosAccepted}
+                    >
+                      <Google className="mr-2 h-4 w-4" /> Войти через Google
+                    </Button>
+                  </form>
+                </TabsContent>
                 
-                <Button 
-                  type="submit"
-                  className="w-full py-6 bg-primary/90 hover:bg-primary transition-all duration-300 rounded-lg floating-button"
-                  disabled={!accessCode || !cookiesAccepted || !tosAccepted}
-                >
-                  Access Chat
-                </Button>
-              </form>
+                <TabsContent value="signup">
+                  <form onSubmit={handleSignUp} className="space-y-4">
+                    <div>
+                      <Input
+                        type="email"
+                        placeholder="Электронная почта"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        className="w-full py-6 floating-input"
+                      />
+                    </div>
+                    
+                    <div>
+                      <Input
+                        type="password"
+                        placeholder="Пароль"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        className="w-full py-6 floating-input"
+                      />
+                    </div>
+                    
+                    <div>
+                      <Input
+                        type="password"
+                        placeholder="Подтвердите пароль"
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        className="w-full py-6 floating-input"
+                      />
+                    </div>
+                    
+                    {authError && (
+                      <p className="text-destructive text-sm mt-1">{authError}</p>
+                    )}
+                    
+                    <div className="space-y-2">
+                      <div className="flex items-center space-x-2">
+                        <Checkbox 
+                          id="cookies-signup" 
+                          checked={cookiesAccepted} 
+                          onCheckedChange={(checked) => setCookiesAccepted(checked as boolean)} 
+                        />
+                        <label htmlFor="cookies-signup" className="text-sm text-muted-foreground cursor-pointer">
+                          Я принимаю использование cookies и сбор данных для улучшения сервиса
+                        </label>
+                      </div>
+                      
+                      <div className="flex items-center space-x-2">
+                        <Checkbox 
+                          id="tos-signup" 
+                          checked={tosAccepted} 
+                          onCheckedChange={(checked) => setTosAccepted(checked as boolean)} 
+                        />
+                        <label htmlFor="tos-signup" className="text-sm text-muted-foreground cursor-pointer">
+                          Я согласен с Условиями использования и Политикой конфиденциальности
+                        </label>
+                      </div>
+                    </div>
+                    
+                    <Button 
+                      type="submit"
+                      className="w-full py-6 bg-primary/90 hover:bg-primary transition-all duration-300 rounded-lg floating-button"
+                      disabled={!cookiesAccepted || !tosAccepted || authLoading}
+                    >
+                      {authLoading ? "Регистрация..." : "Зарегистрироваться"}
+                    </Button>
+                    
+                    <div className="relative">
+                      <div className="absolute inset-0 flex items-center">
+                        <span className="w-full border-t" />
+                      </div>
+                      <div className="relative flex justify-center text-xs uppercase">
+                        <span className="bg-background px-2 text-muted-foreground">Или</span>
+                      </div>
+                    </div>
+                    
+                    <Button 
+                      type="button"
+                      variant="outline"
+                      onClick={googleSignIn}
+                      className="w-full py-6 transition-all duration-300 rounded-lg"
+                      disabled={!cookiesAccepted || !tosAccepted}
+                    >
+                      <Google className="mr-2 h-4 w-4" /> Войти через Google
+                    </Button>
+                  </form>
+                </TabsContent>
+                
+                <TabsContent value="accesscode">
+                  <form onSubmit={handleAccessSubmit} className="space-y-4">
+                    <div>
+                      <Input
+                        type="text"
+                        placeholder="Введите код доступа (16 символов)"
+                        value={accessCode}
+                        onChange={(e) => setAccessCode(e.target.value)}
+                        className="w-full py-6 floating-input"
+                        maxLength={16}
+                      />
+                      {error && <p className="text-destructive text-sm mt-1">{error}</p>}
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <div className="flex items-center space-x-2">
+                        <Checkbox 
+                          id="cookies-code" 
+                          checked={cookiesAccepted} 
+                          onCheckedChange={(checked) => setCookiesAccepted(checked as boolean)} 
+                        />
+                        <label htmlFor="cookies-code" className="text-sm text-muted-foreground cursor-pointer">
+                          Я принимаю использование cookies и сбор данных для улучшения сервиса
+                        </label>
+                      </div>
+                      
+                      <div className="flex items-center space-x-2">
+                        <Checkbox 
+                          id="tos-code" 
+                          checked={tosAccepted} 
+                          onCheckedChange={(checked) => setTosAccepted(checked as boolean)} 
+                        />
+                        <label htmlFor="tos-code" className="text-sm text-muted-foreground cursor-pointer">
+                          Я согласен с Условиями использования и Политикой конфиденциальности
+                        </label>
+                      </div>
+                    </div>
+                    
+                    <Button 
+                      type="submit"
+                      className="w-full py-6 bg-primary/90 hover:bg-primary transition-all duration-300 rounded-lg floating-button"
+                      disabled={!accessCode || !cookiesAccepted || !tosAccepted}
+                    >
+                      Получить доступ к чату
+                    </Button>
+                  </form>
+                </TabsContent>
+              </Tabs>
             </div>
           </div>
 
           <div className="mt-8 text-center text-xs text-muted-foreground animate-fade-in" style={{ animationDelay: "800ms" }}>
             <div className="space-y-2">
-              <p>Powered by OpenRouter AI - Images and text are processed via their API</p>
-              <p>Your data is collected and processed according to our Privacy Policy</p>
+              <p>Работает на OpenRouter AI - Изображения и текст обрабатываются через их API</p>
+              <p>Ваши данные собираются и обрабатываются в соответствии с нашей Политикой конфиденциальности</p>
             </div>
           </div>
         </div>
