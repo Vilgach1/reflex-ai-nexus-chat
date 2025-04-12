@@ -103,6 +103,10 @@ export const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage, disabled })
             <Send className="h-4 w-4" />
           </Button>
         </div>
+        
+        <div className="text-xs text-muted-foreground p-2 text-center italic">
+          ИИ может ошибаться. Пожалуйста, проверяйте важную информацию.
+        </div>
       </div>
     </form>
   );

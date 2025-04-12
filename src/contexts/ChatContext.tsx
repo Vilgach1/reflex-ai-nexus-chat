@@ -165,7 +165,7 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
       ];
 
-      // Call the API - Updated to match Python implementation
+      // Call the API using the fetch format provided
       const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
         method: "POST",
         headers: {
@@ -201,7 +201,7 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
           }
         });
 
-        // Call OpenAI API to verify
+        // Call OpenAI API to verify using the same fetch format
         const verificationResponse = await fetch("https://openrouter.ai/api/v1/chat/completions", {
           method: "POST",
           headers: {
