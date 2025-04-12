@@ -11,7 +11,7 @@ const Chat: React.FC = () => {
   // Set default API key on component mount
   useEffect(() => {
     // Set the provided API key only if it's not already set
-    setApiKey("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");
+    setApiKey("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");
     
     // Simulate loading
     const timer = setTimeout(() => {

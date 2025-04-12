@@ -80,7 +80,7 @@ export const ChatInterface: React.FC = () => {
         style={{ scrollBehavior: "smooth" }}
       >
         {messages.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full text-center p-6">
+          <div className="flex flex-col items-center justify-center h-full text-center p-6 animate-fade-in">
             <div className="w-16 h-16 mb-4 rounded-full bg-primary/5 flex items-center justify-center animate-float">
               <img src="/lovable-uploads/6c6c0bb8-75ce-4564-b83c-9893d315e7a6.png" alt="REFLEX AI" className="w-10 h-10" />
             </div>
