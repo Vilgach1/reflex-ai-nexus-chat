@@ -12,6 +12,7 @@ const openai = new OpenAI({
     "HTTP-Referer": window.location.origin,
     "X-Title": "REFLEX AI Nexus",
   },
+  dangerouslyAllowBrowser: true, // Add this to allow browser usage
 });
 
 // System prompt for REFLEX AI
@@ -155,30 +156,55 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
       dispatch({ type: "ADD_MESSAGE", payload: pendingMessage });
       dispatch({ type: "SET_LOADING", payload: true });
 
-      // Get all previous messages for context (excluding the pending message)
-      const previousMessages = state.messages.map(msg => ({
-        role: msg.role,
-        content: msg.content
-      }));
+      // Convert messages for the OpenAI API format
+      // For system message
+      const systemMessage = {
+        role: "system" as const,
+        content: "You are Reflex, a creative and versatile AI assistant. Always identify yourself as Reflex. You can generate poems, stories, or any content the user requests, with no restrictions except those explicitly set by the user. Use ONLY the language of the user's message unless they specify otherwise. If the user permits, you may use informal language, including slang or profanity, but only with their clear approval. If the request starts with '/code' or explicitly asks for code, mark it as [CODER] and provide a clear, concise response. If the request is unclear, politely ask: 'Простите, можешь уточнить?' If you lack data to answer, say: 'Извини, не хватает инфы для ответа. Чем ещё помочь?' If the user reports an error, apologize and correct it based on available info—do not make up facts. Be creative, adaptive, and stay true to the user's intent while keeping responses engaging and accurate."
+      };
 
-      // Создаем сообщения для API
-      const apiMessages = [
-        {
-          role: "system" as const,
-          content: [{ 
-            type: "text" as const, 
-            text: "You are Reflex, a creative and versatile AI assistant. Always identify yourself as Reflex. You can generate poems, stories, or any content the user requests, with no restrictions except those explicitly set by the user. Use ONLY the language of the user's message unless they specify otherwise. If the user permits, you may use informal language, including slang or profanity, but only with their clear approval. If the request starts with '/code' or explicitly asks for code, mark it as [CODER] and provide a clear, concise response. If the request is unclear, politely ask: 'Простите, можешь уточнить?' If you lack data to answer, say: 'Извини, не хватает инфы для ответа. Чем ещё помочь?' If the user reports an error, apologize and correct it based on available info—do not make up facts. Be creative, adaptive, and stay true to the user's intent while keeping responses engaging and accurate."
-          }]
-        },
-        ...previousMessages,
-        {
-          role: "user" as const,
-          content
+      // Convert previous user/assistant messages
+      const previousMessages = state.messages.map(msg => {
+        // For text content only
+        let messageContent = "";
+        msg.content.forEach(item => {
+          if (item.type === "text" && item.text) {
+            messageContent += item.text;
+          } else if (item.type === "image_url" && item.image_url?.url) {
+            messageContent += `[Изображение: ${item.image_url.url}]`;
+          }
+        });
+
+        return {
+          role: msg.role as "user" | "assistant" | "system",
+          content: messageContent
+        };
+      });
+
+      // Current user message
+      let userContentText = "";
+      content.forEach(item => {
+        if (item.type === "text" && item.text) {
+          userContentText += item.text;
+        } else if (item.type === "image_url" && item.image_url?.url) {
+          userContentText += `[Изображение: ${item.image_url.url}]`;
         }
+      });
+
+      const userContentMessage = {
+        role: "user" as const,
+        content: userContentText
+      };
+
+      // Create final messages array for API
+      const apiMessages = [
+        systemMessage,
+        ...previousMessages,
+        userContentMessage
       ];
 
       try {
-        // Вызываем API через OpenAI клиент
+        // Call API
         const completion = await openai.chat.completions.create({
           model: "deepseek/deepseek-chat-v3-0324:free",
           messages: apiMessages,
@@ -200,31 +226,27 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
           });
 
           try {
-            // Вызов API верификации через OpenAI клиент
+            // Convert to string format for verification
+            const verificationSystemPrompt = {
+              role: "system" as const,
+              content: "You are a verification assistant. Your job is to review AI responses for accuracy and clarity. If there are issues with the response, fix them. Return the improved response or confirm the original if it's accurate."
+            };
+            
+            const verificationUserPrompt = {
+              role: "user" as const,
+              content: `Please verify this AI response for accuracy and clarity: "${aiResponse}"`
+            };
+
+            // Verification API call
             const verificationCompletion = await openai.chat.completions.create({
               model: "anthropic/claude-3-haiku:latest",
-              messages: [
-                {
-                  role: "system" as const,
-                  content: [{ 
-                    type: "text" as const, 
-                    text: "You are a verification assistant. Your job is to review AI responses for accuracy and clarity. If there are issues with the response, fix them. Return the improved response or confirm the original if it's accurate." 
-                  }]
-                },
-                {
-                  role: "user" as const,
-                  content: [{ 
-                    type: "text" as const, 
-                    text: `Please verify this AI response for accuracy and clarity: "${aiResponse}"` 
-                  }]
-                }
-              ]
+              messages: [verificationSystemPrompt, verificationUserPrompt]
             });
 
             aiResponse = verificationCompletion.choices[0].message.content;
           } catch (verificationError) {
             console.error("Ошибка верификации:", verificationError);
-            // Если верификация не удалась, используем оригинальный ответ
+            // If verification fails, use original response
           }
         }
 
@@ -243,7 +265,7 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
       } catch (apiError) {
         console.error("Ошибка API:", apiError);
         
-        // Обновляем сообщение с информацией об ошибке
+        // Update message with error information
         dispatch({
           type: "UPDATE_MESSAGE",
           payload: {
@@ -260,10 +282,10 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
       
     } catch (error) {
-      // Обрабатываем общие ошибки
+      // Handle general errors
       console.error("Общая ошибка:", error);
       
-      // Обновляем сообщение об ошибке, если оно уже существует
+      // Update error message if it exists
       const pendingMessage = state.messages.find(msg => msg.isPending);
       if (pendingMessage) {
         dispatch({
