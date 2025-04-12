@@ -1,7 +1,18 @@
 
 import React, { createContext, useContext, useReducer, useEffect } from "react";
 import { v4 as uuidv4 } from "uuid";
-import { ChatState, Message, MessageContent, AIModelResponse, Role } from "../types/chat";
+import { ChatState, Message, MessageContent, Role } from "../types/chat";
+
+// System prompt for REFLEX AI
+const SYSTEM_PROMPT = {
+  role: "system",
+  content: [
+    {
+      type: "text",
+      text: "You are Reflex, a creative and versatile AI assistant. Always identify yourself as Reflex. You can generate poems, stories, or any content the user requests, with no restrictions except those explicitly set by the user. Use ONLY the language of the user's message unless they specify otherwise. If the user permits, you may use informal language, including slang or profanity, but only with their clear approval. If the request starts with '/code' or explicitly asks for code, mark it as [CODER] and provide a clear, concise response. If the request is unclear, politely ask: 'Простите, можешь уточнить?' If you lack data to answer, say: 'Извини, не хватает инфы для ответа. Чем ещё помочь?' If the user reports an error, apologize and correct it based on available info—do not make up facts. Be creative, adaptive, and stay true to the user's intent while keeping responses engaging and accurate."
+    }
+  ]
+};
 
 // Actions
 type Action =
@@ -138,8 +149,15 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
         content: msg.content
       }));
 
-      // Create the API messages array
+      // Create the API messages array with system prompt
       const apiMessages = [
+        {
+          role: "system",
+          content: [{ 
+            type: "text", 
+            text: "You are Reflex, a creative and versatile AI assistant. Always identify yourself as Reflex. You can generate poems, stories, or any content the user requests, with no restrictions except those explicitly set by the user. Use ONLY the language of the user's message unless they specify otherwise. If the user permits, you may use informal language, including slang or profanity, but only with their clear approval. If the request starts with '/code' or explicitly asks for code, mark it as [CODER] and provide a clear, concise response. If the request is unclear, politely ask: 'Простите, можешь уточнить?' If you lack data to answer, say: 'Извини, не хватает инфы для ответа. Чем ещё помочь?' If the user reports an error, apologize and correct it based on available info—do not make up facts. Be creative, adaptive, and stay true to the user's intent while keeping responses engaging and accurate."
+          }]
+        },
         ...previousMessages,
         {
           role: "user",
@@ -147,7 +165,7 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
       ];
 
-      // Call the API
+      // Call the API - Updated to match Python implementation
       const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
         method: "POST",
         headers: {
@@ -157,7 +175,7 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
           "Content-Type": "application/json"
         },
         body: JSON.stringify({
-          model: "google/gemini-2.0-flash-thinking-exp-1219:free",
+          model: "deepseek/deepseek-chat-v3-0324:free",
           messages: apiMessages
         })
       });
@@ -167,7 +185,7 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
         throw new Error(errorData.error?.message || "Failed to get response from AI");
       }
 
-      const data: AIModelResponse = await response.json();
+      const data = await response.json();
       let aiResponse = data.choices[0].message.content;
 
       // If dual verification is enabled, verify the response with a second API call
@@ -214,7 +232,7 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
         });
 
         if (verificationResponse.ok) {
-          const verificationData: AIModelResponse = await verificationResponse.json();
+          const verificationData = await verificationResponse.json();
           aiResponse = verificationData.choices[0].message.content;
         }
       }
