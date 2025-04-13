@@ -33,19 +33,31 @@ export const UserManagement: React.FC = () => {
   const fetchUsers = async () => {
     setLoading(true);
     try {
-      // Get users from auth.users
+      console.log('Fetching users from Supabase...');
+      
+      // Get users from auth.users view in Supabase
       const { data: authUsers, error: authError } = await supabase
-        .from('auth.users')
+        .from('users')
         .select('id, email, created_at, last_sign_in_at');
 
-      if (authError) throw authError;
+      if (authError) {
+        console.error('Error fetching users:', authError);
+        throw authError;
+      }
+      
+      console.log('Users fetched:', authUsers);
 
       // Get roles from user_roles
       const { data: roleData, error: roleError } = await supabase
         .from('user_roles')
         .select('user_id, role');
 
-      if (roleError) throw roleError;
+      if (roleError) {
+        console.error('Error fetching roles:', roleError);
+        throw roleError;
+      }
+      
+      console.log('Roles fetched:', roleData);
 
       // Combine the data
       const combinedUsers = (authUsers || []).map(user => {
@@ -56,6 +68,7 @@ export const UserManagement: React.FC = () => {
         };
       });
 
+      console.log('Combined user data:', combinedUsers);
       setUsers(combinedUsers);
     } catch (error) {
       console.error('Error fetching users:', error);

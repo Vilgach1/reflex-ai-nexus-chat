@@ -25,22 +25,35 @@ const Admin: React.FC = () => {
       }
 
       try {
+        // Log to help debug
+        console.log('Checking admin status for user:', user.id);
+        
+        // Get the user role directly from the user_roles table
         const { data, error } = await supabase
           .from('user_roles')
           .select('role')
-          .eq('user_id', user.id)
-          .single();
+          .eq('user_id', user.id);
 
         if (error) {
           console.error('Error checking admin role:', error);
           toast({
-            title: "Error",
-            description: "Could not verify admin permissions",
+            title: "Ошибка",
+            description: "Не удалось проверить права администратора",
             variant: "destructive",
           });
           setIsAdmin(false);
         } else {
-          setIsAdmin(data && data.role === 'admin');
+          console.log('Role data received:', data);
+          // Check if any of the returned roles is 'admin'
+          const hasAdminRole = data && data.length > 0 && data.some(role => role.role === 'admin');
+          setIsAdmin(hasAdminRole);
+          
+          if (hasAdminRole) {
+            toast({
+              title: "Доступ администратора",
+              description: "Вы вошли как администратор",
+            });
+          }
         }
       } catch (error) {
         console.error('Error checking admin status:', error);
@@ -69,6 +82,11 @@ const Admin: React.FC = () => {
   }
 
   if (!isAdmin) {
+    toast({
+      title: "Доступ запрещен",
+      description: "У вас нет прав администратора для доступа к этой странице",
+      variant: "destructive",
+    });
     return <Navigate to="/" replace />;
   }
 
