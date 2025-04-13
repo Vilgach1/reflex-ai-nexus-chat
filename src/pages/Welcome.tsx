@@ -10,17 +10,22 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AlertTriangle, Globe } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerTrigger } from "@/components/ui/drawer";
+import { useMobile } from "@/hooks/use-mobile";
 
 const Welcome: React.FC = () => {
   const { apiKey, setApiKey } = useChat();
   const { user, loading: authLoading, signIn, signUp, googleSignIn } = useAuth();
   const { toast } = useToast();
+  const isMobile = useMobile();
   const [loading, setLoading] = useState(true);
   const [animationComplete, setAnimationComplete] = useState(false);
   const [accessCode, setAccessCode] = useState("");
   const [cookiesAccepted, setCookiesAccepted] = useState(false);
   const [tosAccepted, setTosAccepted] = useState(false);
   const [error, setError] = useState("");
+  const [loginOpen, setLoginOpen] = useState(false);
   const defaultApiKey = "YOUR_API_KEY"; // API key redacted
   
   // Auth form state
@@ -121,6 +126,231 @@ const Welcome: React.FC = () => {
     }
   };
 
+  const LoginForm = () => (
+    <Tabs defaultValue="signin" className="w-full">
+      <TabsList className="grid w-full grid-cols-2 mb-4">
+        <TabsTrigger value="signin">Вход</TabsTrigger>
+        <TabsTrigger value="signup">Регистрация</TabsTrigger>
+      </TabsList>
+      
+      <TabsContent value="signin">
+        <form onSubmit={handleSignIn} className="space-y-4">
+          <div>
+            <Input
+              type="email"
+              placeholder="Электронная почта"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="w-full py-6 floating-input"
+            />
+          </div>
+          
+          <div>
+            <Input
+              type="password"
+              placeholder="Пароль"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full py-6 floating-input"
+            />
+          </div>
+          
+          {authError && (
+            <p className="text-destructive text-sm mt-1">{authError}</p>
+          )}
+          
+          <div className="space-y-2">
+            <div className="flex items-center space-x-2">
+              <Checkbox 
+                id="cookies" 
+                checked={cookiesAccepted} 
+                onCheckedChange={(checked) => setCookiesAccepted(checked as boolean)} 
+              />
+              <label htmlFor="cookies" className="text-sm text-muted-foreground cursor-pointer">
+                Я принимаю использование cookies и сбор данных для улучшения сервиса
+              </label>
+            </div>
+            
+            <div className="flex items-center space-x-2">
+              <Checkbox 
+                id="tos" 
+                checked={tosAccepted} 
+                onCheckedChange={(checked) => setTosAccepted(checked as boolean)} 
+              />
+              <label htmlFor="tos" className="text-sm text-muted-foreground cursor-pointer">
+                Я согласен с Условиями использования и Политикой конфиденциальности
+              </label>
+            </div>
+          </div>
+          
+          <Button 
+            type="submit"
+            className="w-full py-6 bg-primary/90 hover:bg-primary transition-all duration-300 rounded-lg floating-button"
+            disabled={!cookiesAccepted || !tosAccepted || authLoading}
+          >
+            {authLoading ? "Вход..." : "Войти"}
+          </Button>
+          
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <span className="w-full border-t" />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-background px-2 text-muted-foreground">Или</span>
+            </div>
+          </div>
+          
+          <Button 
+            type="button"
+            variant="outline"
+            onClick={googleSignIn}
+            className="w-full py-6 transition-all duration-300 rounded-lg"
+            disabled={!cookiesAccepted || !tosAccepted}
+          >
+            <Globe className="mr-2 h-4 w-4" /> Войти через Google
+          </Button>
+        </form>
+      </TabsContent>
+      
+      <TabsContent value="signup">
+        <form onSubmit={handleSignUp} className="space-y-4">
+          <div>
+            <Input
+              type="email"
+              placeholder="Электронная почта"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="w-full py-6 floating-input"
+            />
+          </div>
+          
+          <div>
+            <Input
+              type="password"
+              placeholder="Пароль"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full py-6 floating-input"
+            />
+          </div>
+          
+          <div>
+            <Input
+              type="password"
+              placeholder="Подтвердите пароль"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              className="w-full py-6 floating-input"
+            />
+          </div>
+          
+          {authError && (
+            <p className="text-destructive text-sm mt-1">{authError}</p>
+          )}
+          
+          <div className="space-y-2">
+            <div className="flex items-center space-x-2">
+              <Checkbox 
+                id="cookies-signup" 
+                checked={cookiesAccepted} 
+                onCheckedChange={(checked) => setCookiesAccepted(checked as boolean)} 
+              />
+              <label htmlFor="cookies-signup" className="text-sm text-muted-foreground cursor-pointer">
+                Я принимаю использование cookies и сбор данных для улучшения сервиса
+              </label>
+            </div>
+            
+            <div className="flex items-center space-x-2">
+              <Checkbox 
+                id="tos-signup" 
+                checked={tosAccepted} 
+                onCheckedChange={(checked) => setTosAccepted(checked as boolean)} 
+              />
+              <label htmlFor="tos-signup" className="text-sm text-muted-foreground cursor-pointer">
+                Я согласен с Условиями использования и Политикой конфиденциальности
+              </label>
+            </div>
+          </div>
+          
+          <Button 
+            type="submit"
+            className="w-full py-6 bg-primary/90 hover:bg-primary transition-all duration-300 rounded-lg floating-button"
+            disabled={!cookiesAccepted || !tosAccepted || authLoading}
+          >
+            {authLoading ? "Регистрация..." : "Зарегистрироваться"}
+          </Button>
+          
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <span className="w-full border-t" />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-background px-2 text-muted-foreground">Или</span>
+            </div>
+          </div>
+          
+          <Button 
+            type="button"
+            variant="outline"
+            onClick={googleSignIn}
+            className="w-full py-6 transition-all duration-300 rounded-lg"
+            disabled={!cookiesAccepted || !tosAccepted}
+          >
+            <Globe className="mr-2 h-4 w-4" /> Войти через Google
+          </Button>
+        </form>
+      </TabsContent>
+      
+      <TabsContent value="accesscode">
+        <form onSubmit={handleAccessSubmit} className="space-y-4">
+          <div>
+            <Input
+              type="text"
+              placeholder="Введите код доступа (16 символов)"
+              value={accessCode}
+              onChange={(e) => setAccessCode(e.target.value)}
+              className="w-full py-6 floating-input"
+              maxLength={16}
+            />
+            {error && <p className="text-destructive text-sm mt-1">{error}</p>}
+          </div>
+          
+          <div className="space-y-2">
+            <div className="flex items-center space-x-2">
+              <Checkbox 
+                id="cookies-code" 
+                checked={cookiesAccepted} 
+                onCheckedChange={(checked) => setCookiesAccepted(checked as boolean)} 
+              />
+              <label htmlFor="cookies-code" className="text-sm text-muted-foreground cursor-pointer">
+                Я принимаю использование cookies и сбор данных для улучшения сервиса
+              </label>
+            </div>
+            
+            <div className="flex items-center space-x-2">
+              <Checkbox 
+                id="tos-code" 
+                checked={tosAccepted} 
+                onCheckedChange={(checked) => setTosAccepted(checked as boolean)} 
+              />
+              <label htmlFor="tos-code" className="text-sm text-muted-foreground cursor-pointer">
+                Я согласен с Условиями использования и Политикой конфиденциальности
+              </label>
+            </div>
+          </div>
+          
+          <Button 
+            type="submit"
+            className="w-full py-6 bg-primary/90 hover:bg-primary transition-all duration-300 rounded-lg floating-button"
+            disabled={!accessCode || !cookiesAccepted || !tosAccepted}
+          >
+            Получить доступ к чату
+          </Button>
+        </form>
+      </TabsContent>
+    </Tabs>
+  );
+
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-4 relative overflow-hidden">
       <div className="absolute top-4 right-4 z-50">
@@ -149,7 +379,7 @@ const Welcome: React.FC = () => {
             <p className="text-muted-foreground">Ваш продвинутый AI-ассистент для общения</p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
             {[
               {
                 title: "Продвинутый Чат",
@@ -160,11 +390,6 @@ const Welcome: React.FC = () => {
                 title: "Режим Верификации",
                 description: "Включите двойную AI-верификацию для более точных ответов",
                 delay: 200
-              },
-              {
-                title: "Красивый Интерфейс",
-                description: "Наслаждайтесь элегантным, минималистичным дизайном с эффектами стекломорфизма",
-                delay: 300
               }
             ].map((feature, index) => (
               <div 
@@ -179,233 +404,42 @@ const Welcome: React.FC = () => {
           </div>
 
           <div 
-            className="animate-slide-up"
+            className="animate-slide-up text-center"
             style={{ animationDelay: "500ms" }}
           >
-            <div className="w-full max-w-md mx-auto p-6 glass-panel rounded-xl animate-fade-in">
-              <Tabs defaultValue="signin" className="w-full">
-                <TabsList className="grid w-full grid-cols-2 mb-4">
-                  <TabsTrigger value="signin">Вход</TabsTrigger>
-                  <TabsTrigger value="signup">Регистрация</TabsTrigger>
-                </TabsList>
-                
-                <TabsContent value="signin">
-                  <form onSubmit={handleSignIn} className="space-y-4">
-                    <div>
-                      <Input
-                        type="email"
-                        placeholder="Электронная почта"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        className="w-full py-6 floating-input"
-                      />
-                    </div>
-                    
-                    <div>
-                      <Input
-                        type="password"
-                        placeholder="Пароль"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        className="w-full py-6 floating-input"
-                      />
-                    </div>
-                    
-                    {authError && (
-                      <p className="text-destructive text-sm mt-1">{authError}</p>
-                    )}
-                    
-                    <div className="space-y-2">
-                      <div className="flex items-center space-x-2">
-                        <Checkbox 
-                          id="cookies" 
-                          checked={cookiesAccepted} 
-                          onCheckedChange={(checked) => setCookiesAccepted(checked as boolean)} 
-                        />
-                        <label htmlFor="cookies" className="text-sm text-muted-foreground cursor-pointer">
-                          Я принимаю использование cookies и сбор данных для улучшения сервиса
-                        </label>
-                      </div>
-                      
-                      <div className="flex items-center space-x-2">
-                        <Checkbox 
-                          id="tos" 
-                          checked={tosAccepted} 
-                          onCheckedChange={(checked) => setTosAccepted(checked as boolean)} 
-                        />
-                        <label htmlFor="tos" className="text-sm text-muted-foreground cursor-pointer">
-                          Я согласен с Условиями использования и Политикой конфиденциальности
-                        </label>
-                      </div>
-                    </div>
-                    
-                    <Button 
-                      type="submit"
-                      className="w-full py-6 bg-primary/90 hover:bg-primary transition-all duration-300 rounded-lg floating-button"
-                      disabled={!cookiesAccepted || !tosAccepted || authLoading}
-                    >
-                      {authLoading ? "Вход..." : "Войти"}
-                    </Button>
-                    
-                    <div className="relative">
-                      <div className="absolute inset-0 flex items-center">
-                        <span className="w-full border-t" />
-                      </div>
-                      <div className="relative flex justify-center text-xs uppercase">
-                        <span className="bg-background px-2 text-muted-foreground">Или</span>
-                      </div>
-                    </div>
-                    
-                    <Button 
-                      type="button"
-                      variant="outline"
-                      onClick={googleSignIn}
-                      className="w-full py-6 transition-all duration-300 rounded-lg"
-                      disabled={!cookiesAccepted || !tosAccepted}
-                    >
-                      <Globe className="mr-2 h-4 w-4" /> Войти через Google
-                    </Button>
-                  </form>
-                </TabsContent>
-                
-                <TabsContent value="signup">
-                  <form onSubmit={handleSignUp} className="space-y-4">
-                    <div>
-                      <Input
-                        type="email"
-                        placeholder="Электронная почта"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        className="w-full py-6 floating-input"
-                      />
-                    </div>
-                    
-                    <div>
-                      <Input
-                        type="password"
-                        placeholder="Пароль"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        className="w-full py-6 floating-input"
-                      />
-                    </div>
-                    
-                    <div>
-                      <Input
-                        type="password"
-                        placeholder="Подтвердите пароль"
-                        value={confirmPassword}
-                        onChange={(e) => setConfirmPassword(e.target.value)}
-                        className="w-full py-6 floating-input"
-                      />
-                    </div>
-                    
-                    {authError && (
-                      <p className="text-destructive text-sm mt-1">{authError}</p>
-                    )}
-                    
-                    <div className="space-y-2">
-                      <div className="flex items-center space-x-2">
-                        <Checkbox 
-                          id="cookies-signup" 
-                          checked={cookiesAccepted} 
-                          onCheckedChange={(checked) => setCookiesAccepted(checked as boolean)} 
-                        />
-                        <label htmlFor="cookies-signup" className="text-sm text-muted-foreground cursor-pointer">
-                          Я принимаю использование cookies и сбор данных для улучшения сервиса
-                        </label>
-                      </div>
-                      
-                      <div className="flex items-center space-x-2">
-                        <Checkbox 
-                          id="tos-signup" 
-                          checked={tosAccepted} 
-                          onCheckedChange={(checked) => setTosAccepted(checked as boolean)} 
-                        />
-                        <label htmlFor="tos-signup" className="text-sm text-muted-foreground cursor-pointer">
-                          Я согласен с Условиями использования и Политикой конфиденциальности
-                        </label>
-                      </div>
-                    </div>
-                    
-                    <Button 
-                      type="submit"
-                      className="w-full py-6 bg-primary/90 hover:bg-primary transition-all duration-300 rounded-lg floating-button"
-                      disabled={!cookiesAccepted || !tosAccepted || authLoading}
-                    >
-                      {authLoading ? "Регистрация..." : "Зарегистрироваться"}
-                    </Button>
-                    
-                    <div className="relative">
-                      <div className="absolute inset-0 flex items-center">
-                        <span className="w-full border-t" />
-                      </div>
-                      <div className="relative flex justify-center text-xs uppercase">
-                        <span className="bg-background px-2 text-muted-foreground">Или</span>
-                      </div>
-                    </div>
-                    
-                    <Button 
-                      type="button"
-                      variant="outline"
-                      onClick={googleSignIn}
-                      className="w-full py-6 transition-all duration-300 rounded-lg"
-                      disabled={!cookiesAccepted || !tosAccepted}
-                    >
-                      <Globe className="mr-2 h-4 w-4" /> Войти через Google
-                    </Button>
-                  </form>
-                </TabsContent>
-                
-                <TabsContent value="accesscode">
-                  <form onSubmit={handleAccessSubmit} className="space-y-4">
-                    <div>
-                      <Input
-                        type="text"
-                        placeholder="Введите код доступа (16 символов)"
-                        value={accessCode}
-                        onChange={(e) => setAccessCode(e.target.value)}
-                        className="w-full py-6 floating-input"
-                        maxLength={16}
-                      />
-                      {error && <p className="text-destructive text-sm mt-1">{error}</p>}
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <div className="flex items-center space-x-2">
-                        <Checkbox 
-                          id="cookies-code" 
-                          checked={cookiesAccepted} 
-                          onCheckedChange={(checked) => setCookiesAccepted(checked as boolean)} 
-                        />
-                        <label htmlFor="cookies-code" className="text-sm text-muted-foreground cursor-pointer">
-                          Я принимаю использование cookies и сбор данных для улучшения сервиса
-                        </label>
-                      </div>
-                      
-                      <div className="flex items-center space-x-2">
-                        <Checkbox 
-                          id="tos-code" 
-                          checked={tosAccepted} 
-                          onCheckedChange={(checked) => setTosAccepted(checked as boolean)} 
-                        />
-                        <label htmlFor="tos-code" className="text-sm text-muted-foreground cursor-pointer">
-                          Я согласен с Условиями использования и Политикой конфиденциальности
-                        </label>
-                      </div>
-                    </div>
-                    
-                    <Button 
-                      type="submit"
-                      className="w-full py-6 bg-primary/90 hover:bg-primary transition-all duration-300 rounded-lg floating-button"
-                      disabled={!accessCode || !cookiesAccepted || !tosAccepted}
-                    >
-                      Получить доступ к чату
-                    </Button>
-                  </form>
-                </TabsContent>
-              </Tabs>
-            </div>
+            {isMobile ? (
+              <Drawer open={loginOpen} onOpenChange={setLoginOpen}>
+                <DrawerTrigger asChild>
+                  <Button 
+                    className="w-full max-w-xs py-6 bg-primary/90 hover:bg-primary transition-all duration-300 rounded-lg floating-button text-lg"
+                  >
+                    Перейти в REFLEX
+                  </Button>
+                </DrawerTrigger>
+                <DrawerContent className="p-6">
+                  <DrawerHeader className="mb-4">
+                    <DrawerTitle>Авторизация</DrawerTitle>
+                  </DrawerHeader>
+                  <LoginForm />
+                </DrawerContent>
+              </Drawer>
+            ) : (
+              <Dialog open={loginOpen} onOpenChange={setLoginOpen}>
+                <DialogTrigger asChild>
+                  <Button 
+                    className="w-full max-w-xs py-6 bg-primary/90 hover:bg-primary transition-all duration-300 rounded-lg floating-button text-lg"
+                  >
+                    Перейти в REFLEX
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-md p-6">
+                  <DialogHeader className="mb-4">
+                    <DialogTitle>Авторизация</DialogTitle>
+                  </DialogHeader>
+                  <LoginForm />
+                </DialogContent>
+              </Dialog>
+            )}
           </div>
 
           <div className="mt-8 text-center text-xs text-muted-foreground animate-fade-in" style={{ animationDelay: "800ms" }}>
