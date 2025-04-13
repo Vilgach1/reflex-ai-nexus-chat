@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Google, AlertTriangle } from "lucide-react";
+import { AlertTriangle, Globe } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 const Welcome: React.FC = () => {
@@ -263,7 +263,7 @@ const Welcome: React.FC = () => {
                       className="w-full py-6 transition-all duration-300 rounded-lg"
                       disabled={!cookiesAccepted || !tosAccepted}
                     >
-                      <Google className="mr-2 h-4 w-4" /> Войти через Google
+                      <Globe className="mr-2 h-4 w-4" /> Войти через Google
                     </Button>
                   </form>
                 </TabsContent>
@@ -352,7 +352,7 @@ const Welcome: React.FC = () => {
                       className="w-full py-6 transition-all duration-300 rounded-lg"
                       disabled={!cookiesAccepted || !tosAccepted}
                     >
-                      <Google className="mr-2 h-4 w-4" /> Войти через Google
+                      <Globe className="mr-2 h-4 w-4" /> Войти через Google
                     </Button>
                   </form>
                 </TabsContent>
