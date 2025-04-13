@@ -1,12 +1,20 @@
 
 import React, { useEffect, useState } from "react";
+import { Navigate } from "react-router-dom";
 import { ChatInterface } from "../components/ChatInterface";
 import { useChat } from "../contexts/ChatContext";
+import { useAuth } from "../contexts/AuthContext";
 import { Skeleton } from "@/components/ui/skeleton";
 
 const Chat: React.FC = () => {
   const { messages, addStaticMessage, setApiKey } = useChat();
+  const { user } = useAuth(); // Add user from Auth context
   const [isLoading, setIsLoading] = useState(true);
+  
+  // Redirect if not logged in
+  if (!user) {
+    return <Navigate to="/" replace />;
+  }
   
   // Set default API key on component mount
   useEffect(() => {
