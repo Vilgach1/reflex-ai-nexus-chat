@@ -9,6 +9,7 @@ import { ChatProvider } from "./contexts/ChatContext";
 import Chat from "./pages/Chat";
 import NotFound from "./pages/NotFound";
 import Welcome from "./pages/Welcome";
+import Admin from "./pages/Admin";
 import { useState, useEffect } from "react";
 import TermsOfService from "./components/TermsOfService";
 import { AuthProvider } from "./contexts/AuthContext";
@@ -48,6 +49,7 @@ const App = () => {
                   <Routes>
                     <Route path="/" element={<Welcome />} />
                     <Route path="/chat" element={<Chat />} />
+                    <Route path="/admin" element={<Admin />} />
                     <Route path="*" element={<NotFound />} />
                   </Routes>
                 </BrowserRouter>
