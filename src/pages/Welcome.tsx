@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useChat } from "../contexts/ChatContext";
 import { useAuth } from "../contexts/AuthContext";
@@ -12,13 +11,13 @@ import { AlertTriangle, Globe } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerTrigger } from "@/components/ui/drawer";
-import { useMobile } from "@/hooks/use-mobile";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const Welcome: React.FC = () => {
   const { apiKey, setApiKey } = useChat();
   const { user, loading: authLoading, signIn, signUp, googleSignIn } = useAuth();
   const { toast } = useToast();
-  const isMobile = useMobile();
+  const isMobile = useIsMobile();
   const [loading, setLoading] = useState(true);
   const [animationComplete, setAnimationComplete] = useState(false);
   const [accessCode, setAccessCode] = useState("");
